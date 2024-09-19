@@ -79,31 +79,49 @@ export default () => ({
                    :class="expand ? 'fixed flex size-full max-h-screen py-10 px-24 z-50' : '2xl:size-72 size-64'"
               >
                 <div class="relative rounded-md border size-full p-1 bg-white"
-                     x-init="graph.value?.nodeType ? $el.appendChild(graph.value) : $el.innerHTML = graph.value"
+                     x-data="{ ready: false }"
+                     x-init="if (graph.value?.nodeType) { ready = true; $el.appendChild(graph.value) }"
                      @click="if (expand && $el.children.length === 1) { destroy(); toggleGlobal(false) }"
                 >
-                  <div class="flex items-center gap-x-1 mr-1 mt-1 absolute top-0 right-0 z-20 text-neutral-600">
-                    <button x-show="expand" class="hover:text-red-500" @click="collapse()">
-                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="size-5">
-                        <path d="M6.28 5.22a.75.75 0 0 0-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 1 0 1.06 1.06L10 11.06l3.72 3.72a.75.75 0 1 0 1.06-1.06L11.06 10l3.72-3.72a.75.75 0 0 0-1.06-1.06L10 8.94 6.28 5.22Z" />
-                      </svg>
-                    </button>
-                    <button x-show="!expand" class="hover:text-red-500" @click="expand = true; toggleGlobal(true)">
-                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="size-4">
-                        <path d="M13 4.5a2.5 2.5 0 1 1 .702 1.737L6.97 9.604a2.518 2.518 0 0 1 0 .792l6.733 3.367a2.5 2.5 0 1 1-.671 1.341l-6.733-3.367a2.5 2.5 0 1 1 0-3.475l6.733-3.366A2.52 2.52 0 0 1 13 4.5Z" />
-                      </svg>
-                    </button>
-                    <button x-show="!expand" class="hover:text-red-500" @click="expand = true">
-                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="size-5">
-                        <path fill-rule="evenodd" d="M5.22 14.78a.75.75 0 0 0 1.06 0l7.22-7.22v5.69a.75.75 0 0 0 1.5 0v-7.5a.75.75 0 0 0-.75-.75h-7.5a.75.75 0 0 0 0 1.5h5.69l-7.22 7.22a.75.75 0 0 0 0 1.06Z" clip-rule="evenodd" />
-                      </svg>
-                    </button>
-                  </div>
+                  <template x-if="ready">
+                    <div class="flex items-center gap-x-1 mr-1 mt-1 absolute top-0 right-0 z-20 text-neutral-600">
+                      <button x-show="expand" class="hover:text-red-500" @click="collapse()">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="size-5">
+                          <path d="M6.28 5.22a.75.75 0 0 0-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 1 0 1.06 1.06L10 11.06l3.72 3.72a.75.75 0 1 0 1.06-1.06L11.06 10l3.72-3.72a.75.75 0 0 0-1.06-1.06L10 8.94 6.28 5.22Z" />
+                        </svg>
+                      </button>
+                      <button x-show="!expand" class="hover:text-red-500" @click="expand = true; toggleGlobal(true)">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="size-4">
+                          <path d="M13 4.5a2.5 2.5 0 1 1 .702 1.737L6.97 9.604a2.518 2.518 0 0 1 0 .792l6.733 3.367a2.5 2.5 0 1 1-.671 1.341l-6.733-3.367a2.5 2.5 0 1 1 0-3.475l6.733-3.366A2.52 2.52 0 0 1 13 4.5Z" />
+                        </svg>
+                      </button>
+                      <button x-show="!expand" class="hover:text-red-500" @click="expand = true">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="size-5">
+                          <path fill-rule="evenodd" d="M5.22 14.78a.75.75 0 0 0 1.06 0l7.22-7.22v5.69a.75.75 0 0 0 1.5 0v-7.5a.75.75 0 0 0-.75-.75h-7.5a.75.75 0 0 0 0 1.5h5.69l-7.22 7.22a.75.75 0 0 0 0 1.06Z" clip-rule="evenodd" />
+                        </svg>
+                      </button>
+                    </div>
+                  </template>
+                  <template x-if="!ready">
+                    <div x-html="graph.init()" class="size-full">
+                    </div>
+                  </template>
                 </div>
                 <template x-if="expand">
                   <div class="absolute inset-0 size-full bg-neutral-400 opacity-25 -z-20" @click="collapse()">
                   </div>
                 </template>
+              </div>
+            `;
+        }
+
+        init() {
+            return `
+              <div class="flex size-full justify-center items-center">
+                <svg class="animate-spin size-6 text-gray-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
               </div>
             `;
         }
@@ -134,7 +152,7 @@ export default () => ({
                 const { Engine } = await import('./graph');
                 let engine = Engine.fromIndex(this.index);
 
-                return engine.createInstance();
+                return engine.createInstance(url);
             });
 
             this.navigation.transition(() => {

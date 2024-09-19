@@ -48,7 +48,7 @@ export class Engine {
         return new Engine(graph);
     }
 
-    createInstance() {
+    createInstance(url) {
         let settings = { allowInvalidContainer: true };
         let container = document.createElement('div');
 
@@ -58,6 +58,10 @@ export class Engine {
         this.instance = new Sigma(this.graph, container, settings);
         this.setupInteraction();
         this.setupGraphStyle();
+
+        let camera = this.instance.getCamera();
+        router.emit('retrieve', { path: url });
+        camera.animate({ ratio: 1 }, { easing: "linear", duration: 200 });
 
         return container;
     }
