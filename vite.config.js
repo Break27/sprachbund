@@ -5,7 +5,7 @@ export default defineConfig({
   root: 'src',
   build: {
     outDir: '../dist',
-    assetsDir: '.assets',
+    assetsDir: '_assets',
     emptyOutDir: true
   },
   plugins: [

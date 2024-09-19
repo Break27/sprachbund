@@ -20,8 +20,8 @@ function walkSourceDir([root, parent], callback) {
     let filenames = fs.readdirSync(base);
 
     for (let name of filenames) {
-        // omit filenames starting with '.'
-        if (name.startsWith(".")) continue;
+        // omit filenames starting with '.' / '_'
+        if (name.startsWith(".") || name.startsWith('_')) continue;
 
         let path = [base, name].join('/');
         let relpath = [parent, name].filter(Boolean).join('/');

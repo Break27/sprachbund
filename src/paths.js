@@ -6,6 +6,6 @@ export const PATH = {};
 
 PATH.CONFIG   = 'config.yaml';
 PATH.OUTPUT   = 'dist';
-PATH.OBJECT   = `${NATIVE ? PATH.OUTPUT : ''}/.objects`;
+PATH.OBJECT   = `${NATIVE ? PATH.OUTPUT : ''}/_site`;
 PATH.INDEX    = `${PATH.OBJECT}/index`;
 PATH.METADATA = `${PATH.OBJECT}/metadata`;
