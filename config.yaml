@@ -1,0 +1,16 @@
+name: Sprachbund
+description: an example web application
+language: en
+
+vault:
+  root: public
+  cleanup: true
+
+view:
+  index:
+  notfound:
+
+metadata:
+  hidden:
+    - example
+    - foo/bar.md
