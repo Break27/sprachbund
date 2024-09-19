@@ -12,7 +12,6 @@
   },
   "devDependencies": {
     "@tailwindcss/typography": "^0.5.15",
-    "ali-oss": "^6.21.0",
     "autoprefixer": "^10.4.20",
     "front-matter": "^4.0.2",
     "mustache": "^4.2.0",

@@ -6,7 +6,6 @@ import { createHash } from 'node:crypto'
 import { encode, decode } from '@msgpack/msgpack'
 
 import Mustache from 'mustache'
-import OSS from 'ali-oss'
 import YAML from 'yaml'
 import fs from 'node:fs'
 import fm from'front-matter'
