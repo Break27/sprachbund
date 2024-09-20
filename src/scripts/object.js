@@ -236,7 +236,7 @@ export class Folder extends BaseNode {
                                { behavior: 'smooth', block: 'center' }), 150);
                        };
                        router.on('ready', () => {
-                           react();
+                           $nextTick(() => react());
                        });
                        router.on('navigate', () => {
                            navigate = true;
@@ -305,7 +305,9 @@ export class Document extends BaseNode {
         `;
 
         return `
-          <div class="flex flex-col w-full md:mx-12 m-6 md:mt-8">
+          <div x-init="$nextTick(() => router.emit('ready'))"
+               class="flex flex-col w-full md:mx-12 m-6 md:mt-8" 
+          >
             <div class="font-bold text-4xl mb-6">${title}</div>
             <div x-ref="page" class="prose prose-neutral max-w-none w-full
                                      ${this.metadata['no_sidebar'] ? '' : 'md:max-w-prose'}"

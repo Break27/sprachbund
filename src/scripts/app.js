@@ -83,10 +83,10 @@ export default () => ({
               <div class="uppercase text-sm font-semibold mb-3">Interactive graph</div>
               <div x-data="{ expand: false,
                              anchor: $el.parentElement,
-                             destroy: () => $el.remove(),
+                             remove: () => $el.remove(),
                              collapse: () => { $data.expand = false;
                                                $data.anchor.appendChild($el);
-                                               $data.toggleGlobal(false)
+                                               $data.toggleGlobal(false);
                                              },
                              toggleGlobal: (value) => router.emit('graphview toggle global', { value })
                            }"
@@ -95,8 +95,8 @@ export default () => ({
               >
                 <div class="relative rounded-md border size-full p-1 bg-white"
                      x-data="{ ready: false }"
-                     x-init="if (graph.value?.nodeType) { ready = true; $el.appendChild(graph.value) } else ready = false;"
-                     @click="if (expand && !ready) { destroy(); toggleGlobal(false) }"
+                     x-init="if (graph.value?.nodeType) { ready = true; $el.appendChild(graph.value) }"
+                     @click="if ($el.children.length < 4) { remove(); toggleGlobal(false) }"
                 >
                   <template x-if="ready">
                     <div class="flex items-center gap-x-1 mr-1 mt-1 absolute top-0 right-0 z-20 text-neutral-600">

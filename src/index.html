@@ -13,7 +13,7 @@
   <body class="antialiased md:subpixel-antialiased">
     <div x-data="app" class="relative flex flex-col md:flex-row lg:justify-center justify-normal">
       <div class="2xl:min-w-80 min-w-72 min-h-12 max-h-screen">
-        <div x-data="{ open: false }" x-init="router.on('ready', () => open = false)"
+        <div x-data="{ open: false }" x-init="router.on('active', () => open = false)"
              class="flex flex-col fixed 2xl:w-80 md:w-72 size-full md:border-r border-0 pointer-events-none z-20"
         >
           <div class="md:block flex items-center gap-x-4 px-5 md:pt-8 py-3 md:border-0 border-b bg-white pointer-events-auto select-none">

@@ -22,7 +22,7 @@ export default {
             else this.goto(Routes.error);
         }
 
-        this.emit('ready');
+        this.emit('active');
     },
     route(path) {
         return true;
