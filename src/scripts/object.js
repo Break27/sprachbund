@@ -53,9 +53,8 @@ class BaseNode extends BaseObject {
 }
 
 export class Index extends BaseObject {
-    constructor(view, metadata, object, links = {}) {
+    constructor(metadata, object, links = {}) {
         super();
-        this.view = view;
         this.metadata = metadata;
         this.object = object;
         this.links = links;
@@ -64,13 +63,7 @@ export class Index extends BaseObject {
     static Metadata(x) {
         return {
             hidden: x?.hidden,
-        }
-    }
-
-    static View(x) {
-        return {
-            index: x?.index,
-            notfound: x?.notfound
+            routes: x?.routes,
         }
     }
 
@@ -151,27 +144,6 @@ export class Index extends BaseObject {
 
         return [root, searchable];
     }
-
-    createView(path = '') {
-        let entry = this.getObject(path);
-        let view = this.view;
-
-        if (! path) {
-            path = view.index ?? '';
-            entry = this.getObject(path);
-
-            if (!entry) return [path, Document.Blank()];
-        }
-
-        if (! entry) {
-            path = view.notfound ?? '';
-            entry = this.getObject(path);
-
-            if (!entry) return [path, Document.NotFound()];
-        }
-
-        return [path, entry];
-    }
 }
 
 export class Folder extends BaseNode {
@@ -242,10 +214,12 @@ export class Folder extends BaseNode {
 
         return `
           <div x-data="{ active: null, navigate: false }"
-               x-init="router.on('ready', ({ url }) => {
+               x-init="router.on('ready', () => {
                            let isFromNav = navigate;
+                           let path = window.location.pathname;
+
                            active?.setAttribute('data-active', false);
-                           active = $el.querySelector(\`[data-path=&quot;\${url}&quot;]\`);
+                           active = $el.querySelector(\`[data-path=&quot;\${path}&quot;]\`);
                            active?.setAttribute('data-active', true);
 
                            if (isFromNav) return;
@@ -278,29 +252,6 @@ export class Document extends BaseNode {
         this.links = [];
     }
 
-    static NotFound() {
-        return {
-            render: () => `
-              <div class="flex size-full justify-center self-center">
-                <div class="flex flex-col items-center">
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="size-24 text-neutral-200">
-                    <path fill-rule="evenodd" d="M4.5 2A1.5 1.5 0 0 0 3 3.5v13A1.5 1.5 0 0 0 4.5 18h11a1.5 1.5 0 0 0 1.5-1.5V7.621a1.5 1.5 0 0 0-.44-1.06l-4.12-4.122A1.5 1.5 0 0 0 11.378 2H4.5Zm2.25 8.5a.75.75 0 0 0 0 1.5h6.5a.75.75 0 0 0 0-1.5h-6.5Zm0 3a.75.75 0 0 0 0 1.5h6.5a.75.75 0 0 0 0-1.5h-6.5Z" clip-rule="evenodd" />
-                  </svg>
-                  <div class="font-semibold">
-                    NOT FOUND
-                  </div>
-                </div>
-              </div>
-            `
-        }
-    }
-
-    static Blank() {
-        return {
-            render: () => ''
-        }
-    }
-
     fullname() {
         return this.name + '.md';
     }
@@ -312,13 +263,7 @@ export class Document extends BaseNode {
         let title = this.metadata.title ?? this.name;
         document.title = `${title} - ${appName}`;
 
-        return `
-          <div class="flex flex-col w-full md:mx-12 m-6 md:mt-8">
-            <div class="font-bold text-4xl mb-6">${title}</div>
-            <div x-ref="page" class="prose prose-neutral md:max-w-prose max-w-none w-full">
-              ${marked(this.content)}
-            </div>
-          </div>
+        let sidebar = () => `
           <div class="lg:block hidden 2xl:min-w-80 max-w-72 w-full max-h-screen">
             <div class="flex flex-col fixed gap-y-8 pt-6 2xl:w-80 w-72 select-none">
               <!-- Interactive Graph -->
@@ -329,16 +274,16 @@ export class Document extends BaseNode {
                            $nextTick(() => headings = $refs.page.querySelectorAll(':not([data-type]) > :is(h1, h2, h3, h4, h5, h6)'))"
                    x-show="headings.length > 0"
                    class="mr-8"
-              >
-                <div class="uppercase text-sm font-semibold mb-3">On this page</div>
-                <div class="overflow-y-auto overscroll-contain 2xl:max-h-96 max-h-64">
-                  <template x-for="heading in headings">
-                    <div :data-level="heading.tagName"
-                         x-data="{ id: '#' + heading.innerText, scroll: () => heading.scrollIntoView() }"
-                         x-init="if (hash === id) scroll()"
-                         class="data-[level=H1]:pl-0 data-[level=H1]:border-0 data-[level=H1]:ml-0
-                                data-[level=H2]:ml-1 data-[level=H3]:ml-5 data-[level=H4]:ml-9 data-[level=H5]:ml-[3.25rem] ml-[4.25rem]
-                                pl-3 border-l"
+               >
+                 <div class="uppercase text-sm font-semibold mb-3">On this page</div>
+                 <div class="overflow-y-auto overscroll-contain 2xl:max-h-96 max-h-64">
+                 <template x-for="heading in headings">
+                   <div :data-level="heading.tagName"
+                        x-data="{ id: '#' + heading.innerText, scroll: () => heading.scrollIntoView() }"
+                        x-init="if (hash === id) scroll()"
+                        class="data-[level=H1]:pl-0 data-[level=H1]:border-0 data-[level=H1]:ml-0
+                            data-[level=H2]:ml-1 data-[level=H3]:ml-5 data-[level=H4]:ml-9 data-[level=H5]:ml-[3.25rem] ml-[4.25rem]
+                            pl-3 border-l"
                     >
                       <a x-text="heading.innerText"
                          class="text-neutral-500 hover:text-neutral-800"
@@ -351,6 +296,18 @@ export class Document extends BaseNode {
               </div>
             </div>
           </div>
+        `;
+
+        return `
+          <div class="flex flex-col w-full md:mx-12 m-6 md:mt-8">
+            <div class="font-bold text-4xl mb-6">${title}</div>
+            <div x-ref="page" class="prose prose-neutral max-w-none w-full
+                                     ${this.metadata['no_sidebar'] ? '' : 'md:max-w-prose'}"
+            >
+              ${marked(this.content)}
+            </div>
+          </div>
+          ${this.metadata['no_sidebar'] ? '' : sidebar()}
         `;
     }
 

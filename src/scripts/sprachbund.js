@@ -20,7 +20,7 @@ function walkSourceDir([root, parent], callback) {
     let filenames = fs.readdirSync(base);
 
     for (let name of filenames) {
-        // omit filenames starting with '.' / '_'
+        // omit filenames starting with '.' or '_'
         if (name.startsWith(".") || name.startsWith('_')) continue;
 
         let path = [base, name].join('/');
@@ -63,7 +63,9 @@ function bisect(filename) {
 }
 
 function buildMdDocs(index, ctx) /* always return falsy values */ {
-    let { attributes, body } = fm(ctx.content);
+    let content = fs.readFileSync(ctx.path, 'utf8');
+
+    let { attributes, body } = fm(content);
     let pathname = [ctx.parent, ctx.short].filter(Boolean).join('/');
 
     let text = transform.wikilink(body, href => {
@@ -116,10 +118,7 @@ function buildMdDocs(index, ctx) /* always return falsy values */ {
 
 function buildObject(index, ctx) /* always return falsy values */ {
     if (ctx.extension === 'md') {
-        let content = fs.readFileSync(ctx.path, 'utf8');
-        let context = { content, ...ctx };
-
-        return buildMdDocs(index, context);
+        return buildMdDocs(index, ctx);
     }
 
     let content = fs.readFileSync(ctx.path);
@@ -140,11 +139,9 @@ function buildObject(index, ctx) /* always return falsy values */ {
     fs.writeFileSync(path, content);
 }
 
-function buildIndex(config, vault) {
+function buildIndex(config) {
     let metadata = Index.Metadata(config["metadata"]);
-    let view = Index.View(config["view"]);
-
-    let index = new Index(view, metadata, {});
+    let index = new Index(metadata, {});
 
     if (! fs.existsSync(PATH.INDEX)) {
         // create index if not found

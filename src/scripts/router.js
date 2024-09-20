@@ -1,24 +1,34 @@
-export const Routes = {
-    index() {},
-    other() {}
+const Routes = {
+    index: null,
+    error: null
 }
 
-const Events = [
-    /* eventName: [callbacks], */
-]
+const Events = {
+    entries: { /* eventName: [callbacks], */ },
+    history: [ /* { eventName, params, }, */ ]
+}
 
 export default {
     react() {
-        let url = window.location.pathname;
-        if (url === '/') {
-            url = encodeURI(Routes.index());
-            history.replaceState({}, '', url);
-        } else {
-            Routes.other(decodeURI(url));
+        let path = decodeURI(window.location.pathname);
+        if (path === '/') {
+            if (! Routes.index) return;
+            history.replaceState({}, '', Routes.index);
+            return this.react();
         }
-        this.emit('ready', { url });
+
+        if (! this.route(path)) {
+            if (! Routes.error) this.emit('error');
+            return this.goto(Routes.error);
+        }
+
+        this.emit('ready');
     },
-    start() {
+    route(path) {
+        return true;
+    },
+    start(routes) {
+        Object.assign(Routes, routes);
         window.addEventListener("popstate", () => this.react());
         this.react();
     },
@@ -32,10 +42,16 @@ export default {
         this.react();
     },
     emit(event, params) {
-        Events[event]?.forEach(fn => fn(params));
+        Events.history.unshift({ event, params });
+        Events.history.length = Math.min(Events.history.length, 50);
+
+        Events.entries[event]?.forEach(fn => fn(params));
+    },
+    last(event) {
+        return Events.history.find(e => e.event === event);
     },
     on(event, callback) {
-        if (! Events[event]) Events[event] = [];
-        Events[event]?.push(callback);
+        if (! Events.entries[event]) Events.entries[event] = [];
+        Events.entries[event]?.push(callback);
     }
 }

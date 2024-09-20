@@ -48,7 +48,7 @@ export class Engine {
         return new Engine(graph);
     }
 
-    createInstance(url) {
+    createInstance() {
         let settings = { allowInvalidContainer: true };
         let container = document.createElement('div');
 
@@ -59,9 +59,8 @@ export class Engine {
         this.setupInteraction();
         this.setupGraphStyle();
 
-        let camera = this.instance.getCamera();
-        router.emit('retrieve', { path: url });
-        camera.animate({ ratio: 1 }, { easing: "linear", duration: 200 });
+        let path = router.last('retrieve')?.params?.path;
+        setTimeout(() => router.emit('retrieve', { path }), 500);
 
         return container;
     }
@@ -199,6 +198,12 @@ export class Engine {
             data.color = activeEdges.includes(edge) ? '#e9757c' : '#999';
             return data;
         });
+    }
+
+    panover(path) {
+        let camera = this.instance.getCamera();
+        router.emit('graphview update', { path });
+        camera.animate({ ratio: 0.5 }, { easing: "linear", duration: 200 });
     }
 
     dispose() {

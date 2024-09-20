@@ -4,13 +4,12 @@ language: en
 
 vault:
   root: public
-  cleanup: true
-
-view:
-  index:
-  notfound:
+  cleanup: false
 
 metadata:
   hidden:
     - example
     - foo/bar.md
+  routes:
+    index:
+    error:

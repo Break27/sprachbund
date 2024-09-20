@@ -1,6 +1,6 @@
 import { Engine } from './search'
 import { Index, State } from './object'
-import router, { Routes } from './router'
+import router from './router'
 import zettelkasten from './zettelkasten'
 
 import { marked } from 'marked'
@@ -60,6 +60,21 @@ export default () => ({
               </div>
             `;
         }
+
+        fallback() {
+            this.value = `
+              <div class="flex size-full justify-center self-center">
+                <div class="flex flex-col items-center">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="size-24 text-neutral-200">
+                    <path fill-rule="evenodd" d="M4.5 2A1.5 1.5 0 0 0 3 3.5v13A1.5 1.5 0 0 0 4.5 18h11a1.5 1.5 0 0 0 1.5-1.5V7.621a1.5 1.5 0 0 0-.44-1.06l-4.12-4.122A1.5 1.5 0 0 0 11.378 2H4.5Zm2.25 8.5a.75.75 0 0 0 0 1.5h6.5a.75.75 0 0 0 0-1.5h-6.5Zm0 3a.75.75 0 0 0 0 1.5h6.5a.75.75 0 0 0 0-1.5h-6.5Z" clip-rule="evenodd" />
+                  </svg>
+                  <div class="font-semibold">
+                    NOT FOUND
+                  </div>
+                </div>
+              </div>
+            `;
+        }
     },
 
     graph: new class extends State {
@@ -80,8 +95,8 @@ export default () => ({
               >
                 <div class="relative rounded-md border size-full p-1 bg-white"
                      x-data="{ ready: false }"
-                     x-init="if (graph.value?.nodeType) { ready = true; $el.appendChild(graph.value) }"
-                     @click="if (expand && $el.children.length === 1) { destroy(); toggleGlobal(false) }"
+                     x-init="if (graph.value?.nodeType) { ready = true; $el.appendChild(graph.value) } else ready = false;"
+                     @click="if (expand && !ready) { destroy(); toggleGlobal(false) }"
                 >
                   <template x-if="ready">
                     <div class="flex items-center gap-x-1 mr-1 mt-1 absolute top-0 right-0 z-20 text-neutral-600">
@@ -103,7 +118,7 @@ export default () => ({
                     </div>
                   </template>
                   <template x-if="!ready">
-                    <div x-html="graph.init()" class="size-full">
+                    <div x-html="graph.value" class="size-full">
                     </div>
                   </template>
                 </div>
@@ -140,43 +155,41 @@ export default () => ({
     async init() {
         this.content.transition(async () => {
             this.index = await Index.fromPack();
-            this.router.start();
 
-            console.log(this.index);
+            this.content.value = ''; // clear init state
+            this.load.apply(this);
+
+            this.router.start(this.index.metadata.routes);
         });
 
-        Routes.index = () => {
-            let [url, view] = this.index.createView();
+        this.router.route = (path) => {
+            let view = this.index.getObject(path);
 
-            this.graph.transition(async () => {
-                const { Engine } = await import('./graph');
-                let engine = Engine.fromIndex(this.index);
-
-                return engine.createInstance(url);
-            });
-
-            this.navigation.transition(() => {
-                let [tree, searchable] = this.index.createTree();
-                let search = this.search.engine.getInstance();
-
-                search.addAllAsync(searchable);
-                return tree.render(false);
-            });
-
-            this.content.transition(() => {
-                return view?.render() ?? '';
-            });
-
-            return url;
+            this.content.value = view?.render();
+            return Boolean(view);
         }
 
-        Routes.other = path => {
-            this.content.transition(() => {
-                let [,view] = this.index.createView(path);
-                return view.render();
-            });
-        }
+        this.router.on('error', () => {
+            this.content.fallback();
+        });
 
         marked.use(zettelkasten());
     },
+    async load() {
+        this.graph.transition(async () => {
+            const { Engine } = await import('./graph');
+            let engine = Engine.fromIndex(this.index);
+            let node = engine.createInstance();
+
+            return node;
+        });
+
+        this.navigation.transition(() => {
+            let [tree, searchable] = this.index.createTree();
+            let search = this.search.engine.getInstance();
+
+            search.addAllAsync(searchable);
+            return tree.render(false);
+        });
+    }
 })
