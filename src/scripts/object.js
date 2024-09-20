@@ -216,7 +216,7 @@ export class Folder extends BaseNode {
 
         return `
           <div x-data="{ active: null, navigate: false }"
-               x-init="router.on('ready', () => {
+               x-init="let react = () => {
                            let isFromNav = navigate;
                            let path = window.location.pathname;
 
@@ -234,11 +234,15 @@ export class Folder extends BaseNode {
                            }
                            setTimeout(() => active?.scrollIntoView(
                                { behavior: 'smooth', block: 'center' }), 150);
+                       };
+                       router.on('ready', () => {
+                           react();
                        });
                        router.on('navigate', () => {
                            navigate = true;
-                           setTimeout(() => navigate = false, 100);
-                       })"
+                           $nextTick(() => navigate = false);
+                       });
+                       $nextTick(() => react())"
           >${html}</div>
         `;
     }

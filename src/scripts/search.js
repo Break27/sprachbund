@@ -39,7 +39,7 @@ export class Engine {
                      placeholder="Search page or heading..."
               >
             </div>
-            <div x-effect="console.log(active)" x-show="active && value" class="absolute rounded-md border bg-white left-0 top-0 mt-9 min-w-48 max-h-96 shadow-xl overflow-y-auto overscroll-contain">
+            <div x-show="active && value" class="absolute rounded-md border bg-white left-0 top-0 mt-9 min-w-48 max-h-96 shadow-xl overflow-y-auto overscroll-contain">
               <div x-data="{ results: [] }" x-effect="results = ${namespace}.search(value)" class="empty:hidden flex flex-col p-1.5">
                 <template x-for="result in results">
                   <div x-html="${namespace}.generateHTML(result)" class="flex size-full"></div>

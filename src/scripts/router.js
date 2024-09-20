@@ -19,7 +19,7 @@ export default {
 
         if (! this.route(path)) {
             if (! Routes.error) this.emit('error');
-            return this.goto(Routes.error);
+            else this.goto(Routes.error);
         }
 
         this.emit('ready');
