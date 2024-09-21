@@ -59,7 +59,7 @@ export class Engine {
         this.setupInteraction();
         this.setupGraphStyle();
 
-        let path = router.last('retrieve')?.params?.path;
+        let path = router.recall('retrieve')?.params?.path;
         setTimeout(() => router.emit('retrieve', { path }), 500);
 
         return container;

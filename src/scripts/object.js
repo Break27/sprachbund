@@ -184,7 +184,7 @@ export class Folder extends BaseNode {
                           data-[active=true]:border-red-600 hover:border-neutral-800"
               >
                 <a class="truncate md:text-base text-lg" href="/${node.path}"
-                   @click="router.emit('navigate'); router.from($event)"
+                   @click="navigate = true; router.from($event)"
                 >${node.name}</a>
               </div>
             `;
@@ -217,14 +217,13 @@ export class Folder extends BaseNode {
         return `
           <div x-data="{ active: null, navigate: false }"
                x-init="let react = () => {
-                           let isFromNav = navigate;
                            let path = window.location.pathname;
 
                            active?.setAttribute('data-active', false);
                            active = $el.querySelector(\`[data-path=&quot;\${path}&quot;]\`);
                            active?.setAttribute('data-active', true);
 
-                           if (isFromNav) return;
+                           if (navigate) return navigate = false;
                            let node = active;
 
                            if (node) while ((node = node.parentElement) !== $el) {
@@ -237,10 +236,6 @@ export class Folder extends BaseNode {
                        };
                        router.on('ready', () => {
                            $nextTick(() => react());
-                       });
-                       router.on('navigate', () => {
-                           navigate = true;
-                           $nextTick(() => navigate = false);
                        });
                        $nextTick(() => react())"
           >${html}</div>

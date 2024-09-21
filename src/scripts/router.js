@@ -5,7 +5,7 @@ const Routes = {
 
 const Events = {
     entries: { /* eventName: [callbacks], */ },
-    history: [ /* { eventName, params, }, */ ]
+    history: [ /* { eventName, params, }, */ ],
 }
 
 export default {
@@ -47,11 +47,15 @@ export default {
 
         Events.entries[event]?.forEach(fn => fn(params));
     },
-    last(event) {
-        return Events.history.find(e => e.event === event);
-    },
     on(event, callback) {
         if (! Events.entries[event]) Events.entries[event] = [];
         Events.entries[event]?.push(callback);
+    },
+    recall(event) {
+        return Events.history.find(e => e.event === event);
+    },
+    cancel(event) {
+        let callbacks = Events.entries[event]?.splice(0, 50);
+        this.on(event, () => Events.entries[event] = callbacks);
     }
 }
