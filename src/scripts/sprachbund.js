@@ -2,12 +2,13 @@ import { PATH } from '../paths.js'
 import { transform } from './zettelkasten.js'
 import { Index, Attachment, Document } from './object.js'
 
-import { createHash } from 'node:crypto'
+import { Client } from 'minio'
+import { createHash } from 'crypto'
 import { encode, decode } from '@msgpack/msgpack'
 
 import Mustache from 'mustache'
 import YAML from 'yaml'
-import fs from 'node:fs'
+import fs from 'fs'
 import fm from'front-matter'
 
 
@@ -139,8 +140,7 @@ function buildObject(index, ctx) /* always return falsy values */ {
     fs.writeFileSync(path, content);
 }
 
-function buildIndex(config) {
-    let metadata = Index.Metadata(config["metadata"]);
+function buildIndex(metadata, vault) {
     let index = new Index(metadata, {});
 
     if (! fs.existsSync(PATH.INDEX)) {
@@ -148,18 +148,9 @@ function buildIndex(config) {
         // or reuse it
         fs.mkdirSync(PATH.OBJECT, { recursive: true });
 
-        walkSourceDir([config.vault.root], ctx => {
+        walkSourceDir([vault], ctx => {
             buildObject(index, ctx);
         });
-
-        if (config.vault.cleanup) {
-            fs.readdirSync(config.vault.root).forEach(name => {
-                if (name !== '.gitignore') {
-                    let path = [config.vault.root, name].join('/');
-                    fs.rmSync(path, { recursive: true, force: true });
-                }
-            });
-        }
 
         return index;
     }
@@ -167,7 +158,7 @@ function buildIndex(config) {
     let buffer = fs.readFileSync(PATH.INDEX);
     let legacy = decode(buffer);
 
-    walkSourceDir([config.vault.root], ctx => {
+    walkSourceDir([vault], ctx => {
         let path = ctx.path;
         let entry = legacy.object[path];
         // if no such legacy entry found, continue
@@ -197,6 +188,51 @@ function buildIndex(config) {
     return index;
 }
 
+function prepareVault(config) {
+    switch (config["type"]) {
+    case "minio":
+        fs.rmSync(PATH.S3TEMP, { recursive: true, force: true });
+        fs.mkdirSync(PATH.S3TEMP);
+
+        let bucket = config["bucket"];
+        let prefix = config["prefix"];
+        
+        let client = new Client(config);
+        let stream = client.listObjectsV2(bucket, prefix, true);
+
+        stream.on('data', item => {
+            let name = item.name.replace(prefix, '');
+            let path = `${PATH.S3TEMP}/${name}`;
+
+            if (name.endsWith('/')) {
+                if (! fs.existsSync(path)) fs.mkdirSync(path);
+                return;
+            }
+
+            stream.pause();
+            console.log(item.name);
+
+            client.fGetObject(bucket, item.name, path)
+                .catch(err => { throw err })
+                .finally(() => stream.resume());
+        });
+
+        return new Promise((resolve, reject) => {
+            stream.on('close', () => resolve(PATH.S3TEMP));
+            stream.on('error', er => reject(er));
+        });
+    case "file":
+        let path = config["path"];
+
+        if (fs.existsSync(path) && fs.lstatSync(path).isDirectory) {
+            return new Promise((resolve) => resolve(path));
+        }
+        throw new Error(path + ": not a valid vault");
+    default:
+        throw new Error("invalid vault type");
+    }
+}
+
 if (process.argv[1] === import.meta.filename) {
     // when running under node.js solely
     sprachbund().writeBundle();
@@ -213,11 +249,11 @@ export default function sprachbund() {
                 language:    CONFIG?.language,
             });
         },
-        writeBundle() {
-            let index = buildIndex(CONFIG);
-            let data = encode(index);
-
-            fs.writeFileSync(PATH.INDEX, data);
+        async writeBundle() {
+            let vault = await prepareVault(CONFIG.vault);
+            let index = buildIndex(CONFIG.metadata, vault);
+            
+            fs.writeFileSync(PATH.INDEX, encode(index));
         },
     }
 }
