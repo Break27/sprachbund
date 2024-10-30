@@ -32,8 +32,8 @@ export default () => ({
 
     search: new class extends State {
         constructor() {
-          super();
-          this.engine = Engine.Default();
+            super();
+            this.engine = Engine.Default();
         }
 
         toString() {
@@ -152,12 +152,27 @@ export default () => ({
         }
     },
 
-    async init() {
+    init() {
         this.content.transition(async () => {
             this.index = await Index.fromPack();
-
             this.content.value = ''; // clear init state
-            this.load.apply(this);
+
+            this.graph.transition(async () => {
+                const { Engine } = await import('./graph');
+
+                let engine = Engine.fromIndex(this.index);
+                let node = await engine.createInstance();
+    
+                return node;
+            });
+    
+            this.navigation.transition(() => {
+                let [tree, searchable] = this.index.createTree();
+                let search = this.search.engine.getInstance();
+    
+                search.addAllAsync(searchable);
+                return tree.render(false);
+            });
 
             this.router.start(this.index.metadata.routes);
         });
@@ -174,22 +189,5 @@ export default () => ({
         });
 
         marked.use(zettelkasten());
-    },
-    async load() {
-        this.graph.transition(async () => {
-            const { Engine } = await import('./graph');
-            let engine = Engine.fromIndex(this.index);
-            let node = engine.createInstance();
-
-            return node;
-        });
-
-        this.navigation.transition(() => {
-            let [tree, searchable] = this.index.createTree();
-            let search = this.search.engine.getInstance();
-
-            search.addAllAsync(searchable);
-            return tree.render(false);
-        });
     }
 })

@@ -22,7 +22,7 @@ export class Engine {
             let source = index.object[src];
 
             let label = source?.name ?? src;
-            let path = source?.path ?? src;
+            let path  = source?.path ?? src;
 
             if (! graph.hasNode(src)) {
                 graph.addNode(src, { label, path });
@@ -32,7 +32,7 @@ export class Engine {
                 let target = index.object[dest];
 
                 let label = target?.name ?? dest;
-                let path = target?.path ?? dest;
+                let path  = target?.path ?? dest;
 
                 if (! graph.hasNode(dest)) {
                     graph.addNode(dest, { label, path });
@@ -48,19 +48,23 @@ export class Engine {
         return new Engine(graph);
     }
 
-    createInstance() {
+    async createInstance() {
         let settings = { allowInvalidContainer: true };
         let container = document.createElement('div');
 
         container.style.width = '100%';
         container.style.height = '100%';
 
+        let nodes = this.graph.nodes().length;
+        let delay = nodes * 20;
+
         this.instance = new Sigma(this.graph, container, settings);
         this.setupInteraction();
-        this.setupGraphStyle();
+        this.setupGraphStyle(delay);
 
-        let path = router.recall('retrieve')?.params?.path;
-        setTimeout(() => router.emit('retrieve', { path }), 500);
+        await new Promise((resolve) => {
+            setTimeout(() => resolve(), delay);
+        });
 
         return container;
     }
@@ -135,7 +139,7 @@ export class Engine {
         });
     }
 
-    setupGraphStyle() {
+    setupGraphStyle(delay) {
         let localNodes = [];
         let localEdges = [];
         let showGlobal = false;
@@ -145,7 +149,7 @@ export class Engine {
             if (value) localEdges = this.graph.edges();
         });
 
-        router.on('retrieve', ({ path }) => {
+        let event = router.on('retrieve', ({ path }) => {
             let cache = this.instance.nodeDataCache;
 
             if (!(path in cache)) {
@@ -163,6 +167,8 @@ export class Engine {
             localNodes = this.graph.neighbors(path).concat(path);
             localEdges = localNodes.reduce((r, n) => r.concat(this.graph.edges(n)), []);
         });
+
+        setTimeout(() => event.recall(), delay);
 
         let activeNodes = [];
         let activeEdges = [];
@@ -198,12 +204,6 @@ export class Engine {
             data.color = activeEdges.includes(edge) ? '#e9757c' : '#999';
             return data;
         });
-    }
-
-    panover(path) {
-        let camera = this.instance.getCamera();
-        router.emit('graphview update', { path });
-        camera.animate({ ratio: 0.5 }, { easing: "linear", duration: 200 });
     }
 
     dispose() {
