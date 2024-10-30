@@ -41,21 +41,26 @@ export default {
         history.pushState({}, '', base + url);
         this.react();
     },
-    emit(event, params) {
-        Events.history.unshift({ event, params });
+    emit(eventName, params) {
+        Events.history.unshift({ eventName, params });
         Events.history.length = Math.min(Events.history.length, 50);
 
-        Events.entries[event]?.forEach(fn => fn(params));
+        Events.entries[eventName]?.forEach(fn => fn(params));
     },
-    on(event, callback) {
-        if (! Events.entries[event]) Events.entries[event] = [];
-        Events.entries[event]?.push(callback);
-    },
-    recall(event) {
-        return Events.history.find(e => e.event === event);
-    },
-    cancel(event) {
-        let callbacks = Events.entries[event]?.splice(0, 50);
-        this.on(event, () => Events.entries[event] = callbacks);
+    on(eventName, callback) {
+        if (! Events.entries[eventName]) Events.entries[eventName] = [];
+        Events.entries[eventName]?.push(callback);
+
+        return {
+            recall: () => {
+                for (let e of Events.history)
+                    if (e.eventName === eventName)
+                        return callback(e.params);
+            },
+            cancel: () => {
+                let callbacks = Events.entries[eventName];
+                this.on(eventName, () => Events.entries[eventName] = callbacks);
+            }
+        };
     }
 }
