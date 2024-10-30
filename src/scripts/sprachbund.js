@@ -197,7 +197,7 @@ function prepareVault(config) {
         let bucket = config["bucket"];
         let prefix = config["prefix"];
         
-        let client = new Client(config);
+        let client = new Client(config["client"]);
         let stream = client.listObjectsV2(bucket, prefix, true);
 
         stream.on('data', item => {
@@ -224,7 +224,7 @@ function prepareVault(config) {
     case "file":
         let path = config["path"];
 
-        if (fs.existsSync(path) && fs.lstatSync(path).isDirectory) {
+        if (fs.lstatSync(path).isDirectory()) {
             return new Promise((resolve) => resolve(path));
         }
         throw new Error(path + ": not a valid vault");
